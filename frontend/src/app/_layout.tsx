@@ -1,18 +1,21 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import * as SplashScreen from 'expo-splash-screen';
+import { Slot } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+// import { SidebarProvider } from '@/context/sidebar-context';
+// import Sidebar from '@/components/sidebar';
+import '../global.css';
 
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
+export default function RootLayout() {
   const colorScheme = useColorScheme();
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+    <ThemeProvider >
+      {/* Slot renders whichever screen is currently active (e.g. index.tsx) */}
+      <Slot />
+      {/* <Sidebar /> was here too, but it's commented out above along with
+          SidebarProvider — re-enable both together once that context exists,
+          otherwise Sidebar will throw for missing context. */}
     </ThemeProvider>
   );
 }
