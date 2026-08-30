@@ -169,7 +169,7 @@ const insets = useSafeAreaInsets();
                   })}
                 </View>
     
-                <View style={styles.edgeBox}>
+                {/* <View style={styles.edgeBox}>
                   <View style={styles.rowBetween}>
                     <Text style={styles.dimText}>Edge Device</Text>
                     <Text style={[styles.dimText, { color: C.green, fontWeight: "600" }]}>Active</Text>
@@ -178,7 +178,7 @@ const insets = useSafeAreaInsets();
                     <Text style={styles.dimText}>Last Sync</Text>
                     <Text style={[styles.dimText, { color: "rgba(209,250,229,0.8)" }]}>2 min ago</Text>
                   </View>
-                </View>
+                </View> */}
               </ScrollView>
               </View>
             )}

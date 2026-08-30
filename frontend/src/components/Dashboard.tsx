@@ -591,13 +591,13 @@ export default function Dashboard() {
           </View>
         </View>
 
-        <Pressable style={styles.pillCard} onPress={() => setOffline((o) => !o)}>
+        {/* <Pressable style={styles.pillCard} onPress={() => setOffline((o) => !o)}>
           {offline ? <WifiOff size={16} color={C.green} /> : <Wifi size={16} color={C.green} />}
           <View>
             <Text style={styles.pillMain}>{offline ? "Offline Mode" : "Online"}</Text>
             <Text style={styles.pillSub}>{offline ? "Data will sync when online" : "Synced just now"}</Text>
           </View>
-        </Pressable>
+        </Pressable>  */}
 
         <View style={{ position: "relative" }}>
           <Pressable style={styles.iconBtn} onPress={() => setNotifOpen((o) => !o)}>
@@ -625,13 +625,13 @@ export default function Dashboard() {
           </View>
         </View>
 
-        <Pressable style={styles.pillCard} onPress={() => setOffline((o) => !o)}>
+        {/* <Pressable style={styles.pillCard} onPress={() => setOffline((o) => !o)}>
           {offline ? <WifiOff size={16} color={C.green} /> : <Wifi size={16} color={C.green} />}
           <View>
             <Text style={styles.pillMain}>{offline ? "Offline Mode" : "Online"}</Text>
             <Text style={styles.pillSub}>{offline ? "Data will sync when online" : "Synced just now"}</Text>
           </View>
-        </Pressable>
+        </Pressable> */}
 
         <View style={{ position: "relative" }}>
           <Pressable style={styles.iconBtn} onPress={() => setNotifOpen((o) => !o)}>
