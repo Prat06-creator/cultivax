@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {useRouter} from 'expo-router'
+import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {
   View,
   Text,
@@ -172,6 +173,7 @@ const NAV_ITEMS = [
 // ----------------------------------------------------------------------------
 
 export default function ChatAssistantScreen() {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
@@ -329,7 +331,7 @@ const [activeChatId, setActiveChatId] = useState('1');
     // >
        <Wrapper style={styles.flex} {...wrapperProps}>
       <View style={styles.container}>
-        <View style={[styles.body]}>
+        <View style={[styles.body ]}>
                 <Sidebar
                 activeNav={activeNav}
           setActiveNav={setActiveNav}
@@ -373,7 +375,7 @@ const [activeChatId, setActiveChatId] = useState('1');
         )}
         <View style={styles.mainChat}>
                   {isNarrow && (
-          <View style={styles.chatsToggleBar}>
+          <View style={[styles.chatsToggleBar, { paddingTop: insets.top + 8 }]}>
             <TouchableOpacity onPress={() => setChatsPanelOpen((o) => !o)} style={styles.chatsToggleBtn}>
               <Feather name="clock" size={16} color={COLORS.textPrimary} />
               <Text style={styles.chatsToggleText}>Recent Chats</Text>

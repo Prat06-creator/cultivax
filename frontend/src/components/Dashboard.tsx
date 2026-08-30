@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from "react";
 import {useRouter} from 'expo-router'
 import Sidebar from "@/components/sidebar";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
   ScrollView,
   Pressable,
-  StyleSheet,
+  StyleSheet, Modal,
   useWindowDimensions,
 } from "react-native";
 import Svg, { Polyline, Path, Circle, Line } from "react-native-svg";
@@ -268,15 +269,18 @@ function Dropdown({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={{ position: "relative", width, zIndex: open ? 30 : 1 }}>
-      <Pressable style={styles.selectBox} onPress={() => setOpen((o) => !o)}>
+    <View style={{  width }}>
+      <Pressable style={styles.selectBox} onPress={() => setOpen((true) )}>
         <Text style={styles.selectText} numberOfLines={1}>
           {value}
         </Text>
         <ChevronDown size={13} color={C.textFaint} />
       </Pressable>
-      {open && (
-        <View style={styles.dropdownList}>
+       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
+          <View style={styles.modalDropdown}>
+      {/* {open && (
+        <View style={styles.dropdownList}> */}
           {options.map((opt) => (
             <Pressable
               key={opt}
@@ -290,14 +294,18 @@ function Dropdown({
             </Pressable>
           ))}
         </View>
-      )}
-    </View>
+        </Pressable>
+        </Modal> </View>
+      // )
+      // }
+    
   );
 }
 
 // ---------- Main component ----------
 export default function Dashboard() {
   const router = useRouter()
+    const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const isNarrow = screenWidth < 900;
 
@@ -436,7 +444,7 @@ export default function Dashboard() {
         {/* Main */}
         <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
           {/* Header */}
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, isNarrow && { flexDirection: "column", alignItems: "flex-start" }, { paddingTop: insets.top + 8 }]}>
             <View style={{ flexShrink: 1 }}>
               <View style={styles.rowCenter}>
                 {isNarrow && (
@@ -466,29 +474,14 @@ export default function Dashboard() {
                 </View>
               </Pressable>
 
-              <View style={{ position: "relative", zIndex: notifOpen ? 40 : 1 }}>
+              <View style={{ position: "relative" }}>
                 <Pressable style={styles.iconBtn} onPress={() => setNotifOpen((o) => !o)}>
                   <Bell size={17} color={C.textPrimary} />
                   <View style={styles.notifDot}>
                     <Text style={styles.notifDotText}>3</Text>
                   </View>
                 </Pressable>
-                {notifOpen && (
-                  <View style={styles.notifPanel}>
-                    {ALERTS.map((a) => {
-                      const Icon = a.icon;
-                      return (
-                        <View key={a.id} style={styles.notifItem}>
-                          <Icon size={16} color={C.amber} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.notifTitle}>{a.title}</Text>
-                            <Text style={styles.notifTime}>{a.time}</Text>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
+                
               </View>
 
               <Pressable style={styles.profileBtn} onPress={() => showToast("Profile menu coming soon")}>
@@ -800,6 +793,22 @@ export default function Dashboard() {
           <Text style={styles.footerText}>CultivaX — Empowering Farmers with AI, Data and Actionable Insights</Text>
         </ScrollView>
       </View>
+      {notifOpen && (
+                   <View style={[styles.notifPanel, { top: insets.top + 56 }]}>
+                    {ALERTS.map((a) => {
+                      const Icon = a.icon;
+                      return (
+                        <View key={a.id} style={styles.notifItem}>
+                          <Icon size={16} color={C.amber} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.notifTitle}>{a.title}</Text>
+                            <Text style={styles.notifTime}>{a.time}</Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
     </View>
   );
 }
@@ -807,7 +816,8 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   root: { flex: 1, minHeight: 0, backgroundColor: C.page },
   body: { flex: 1, minHeight: 0, flexDirection: "row", overflow: "hidden", position: "relative" },
-
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+modalDropdown: { width: 220, borderRadius: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.cardAlt, padding: 8, gap: 4 },
   toast: {
     position: "absolute",
     top: 20,
@@ -879,8 +889,16 @@ const styles = StyleSheet.create({
   iconBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.border, alignItems: "center", justifyContent: "center" },
   notifDot: { position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: 999, backgroundColor: C.red, alignItems: "center", justifyContent: "center" },
   notifDotText: { color: "white", fontSize: 9, fontWeight: "700" },
-
-  notifPanel: { position: "absolute", right: 0, top: 46, width: 280, borderRadius: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, padding: 8, gap: 4 },
+  notifBackdrop: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.3)",
+  zIndex: 9998,
+},
+notifPanel: { position: "absolute", right: 20, width: 280, zIndex: 9999, borderRadius: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, padding: 8, gap: 4 },
   notifItem: { flexDirection: "row", gap: 10, padding: 8 },
   notifTitle: { fontSize: 12, color: C.textPrimary, lineHeight: 17 },
   notifTime: { fontSize: 10, color: C.textFaint, marginTop: 2 },
