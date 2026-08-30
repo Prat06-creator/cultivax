@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import {useRouter} from 'expo-router'
+import Sidebar from "@/components/sidebar";
 import {
   View,
   Text,
@@ -295,6 +297,7 @@ function Dropdown({
 
 // ---------- Main component ----------
 export default function Dashboard() {
+  const router = useRouter()
   const { width: screenWidth } = useWindowDimensions();
   const isNarrow = screenWidth < 900;
 
@@ -355,9 +358,19 @@ export default function Dashboard() {
         </View>
       )}
 
-      <View style={[styles.body, isNarrow && { flexDirection: "column" }]}>
+      <View style={[styles.body]}>
+        <Sidebar
+        activeNav={activeNav}
+  setActiveNav={setActiveNav}
+  isNarrow={isNarrow}
+  sidebarOpen={sidebarOpen}
+  setSidebarOpen={setSidebarOpen}
+  showToast={showToast}/>
         {/* Sidebar */}
-        {(!isNarrow || sidebarOpen) && (
+        {/* {isNarrow && sidebarOpen && (
+  <Pressable style={styles.backdrop} onPress={() => setSidebarOpen(false)} />
+)} */}
+        {/* {(!isNarrow || sidebarOpen) && (
           <View style={[styles.sidebar, isNarrow && styles.sidebarNarrow]}>
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
             <View style={styles.brandRow}>
@@ -378,9 +391,14 @@ export default function Dashboard() {
                   <Pressable
                     key={item.key}
                     onPress={() => {
-                      showToast(`Navigating to ${item.label}...`);
+                       if (isNarrow) setSidebarOpen(false);
+                       showToast(`Navigating to ${item.label}...`);
+                      if (item.key === "chats") {
+                        setTimeout(() => router.push("/chat"), 100);
+                        return;
+                      }
                       setActiveNav(item.key);
-                      if (isNarrow) setSidebarOpen(false);
+        
                     }}
                     style={({ pressed }) => [
                       styles.navBtn,
@@ -413,7 +431,7 @@ export default function Dashboard() {
             </View>
           </ScrollView>
           </View>
-        )}
+        )} */}
 
         {/* Main */}
         <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
@@ -478,7 +496,7 @@ export default function Dashboard() {
                   <Text style={styles.avatarText}>RK</Text>
                 </View>
                 <View>
-                  <Text style={styles.profileName}>Ramesh Kumar</Text>
+                  <Text style={styles.profileName}>UserName</Text>
                   <Text style={styles.profileRole}>Farmer</Text>
                 </View>
                 <ChevronDown size={14} color={C.textFaint} />
@@ -744,9 +762,9 @@ export default function Dashboard() {
             <Card style={styles.flexCol}>
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitleText}>Recent Alerts</Text>
-                <Pressable onPress={() => setActiveNav("alerts")}>
+                {/* <Pressable onPress={() => setActiveNav("alerts")}>
                   <Text style={styles.linkText}>View All</Text>
-                </Pressable>
+                </Pressable> */}
               </View>
               <View style={{ marginTop: 12 }}>
                 {ALERTS.map((a) => {
@@ -788,7 +806,7 @@ export default function Dashboard() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, minHeight: 0, backgroundColor: C.page },
-  body: { flex: 1, minHeight: 0, flexDirection: "row", overflow: "hidden" },
+  body: { flex: 1, minHeight: 0, flexDirection: "row", overflow: "hidden", position: "relative" },
 
   toast: {
     position: "absolute",
@@ -810,8 +828,26 @@ const styles = StyleSheet.create({
     borderRightColor: C.border,
     backgroundColor: C.sidebar,
   },
-  sidebarNarrow: { width: "100%", maxHeight: 320, borderRightWidth: 0, borderBottomWidth: 1, borderBottomColor: C.border },
+  sidebarNarrow: {
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  left: 0,
+  width: 260,
+  zIndex: 40,
+  borderBottomWidth: 0,
+  maxHeight: undefined,
+},
 
+ backdrop: {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  zIndex: 30,
+},
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: C.border },
   brandIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: "rgba(16,185,129,0.15)", alignItems: "center", justifyContent: "center" },
   brandTitle: { fontSize: 14, fontWeight: "700", color: C.textPrimary },
