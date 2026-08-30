@@ -172,8 +172,8 @@ function Badge({ label, color }: { label: string; color: string }) {
 function Sparkline({ points, color }: { points: number[]; color: string }) {
   const w = 100,
     h = 28;
-  const min = Math.min(...points),
-    max = Math.max(...points);
+  const min = Math.min(...points) * 0.9;
+  const max = Math.max(...points) * 1.1;
   const norm = points
     .map((p, i) => {
       const x = (i / (points.length - 1 || 1)) * w;
@@ -201,8 +201,8 @@ function LineChart({
 }) {
   const w = 700;
   const values = data.map((d) => Number(d[dataKey]));
-  const min = 0;
-  const max = Math.max(...values) * 1.15;
+  const min = Math.min(...values) * 0.85;
+  const max = Math.max(...values) * 1.1;
   const stepX = w / (data.length - 1 || 1);
   const points = values.map((v, i) => ({
     x: i * stepX,
@@ -231,7 +231,7 @@ function LineChart({
         ))}
       </View>
     </View>
-  );
+  ); 
 }
 
 function ProgressBar({ value, color }: { value: number; color: string }) {
@@ -511,7 +511,7 @@ export default function Dashboard() {
   onScroll={closeNotif}
   scrollEventThrottle={16}>
           {/* Header */}
-          <View style={[styles.headerRow, isNarrow && { flexDirection: "column", alignItems: "flex-start" }, { paddingTop: insets.top + 8 }]}>
+          {/* <View style={[styles.headerRow, isNarrow && { flexDirection: "column", alignItems: "flex-start" }, { paddingTop: insets.top + 8 }]}>
             <View style={{ flexShrink: 1 }}>
               <View style={styles.rowCenter}>
                 {isNarrow && (
@@ -562,8 +562,101 @@ export default function Dashboard() {
                 <ChevronDown size={14} color={C.textFaint} />
               </Pressable>
             </View>
-          </View>
+          </View> */}
+          <View style={[styles.headerRow, isNarrow && { flexDirection: "column", alignItems: "stretch" }, { paddingTop: insets.top  }]}>
+  {isNarrow ? (
+    <>
+      <View style={styles.topBarRow}>
+  <View style={[styles.rowCenter, { flex: 1, minWidth: 0 }]}>
+    <Pressable onPress={() => setSidebarOpen((o) => !o)} style={{ marginRight: 10 }}>
+      <Monitor size={20} color={C.textDim} />
+    </Pressable>
+    <Text style={[styles.h1, { flexShrink: 1 }]} numberOfLines={2}>Dashboard &amp; Insights</Text>
+  </View>
 
+  <Pressable onPress={() => showToast("Profile menu coming soon")} style={{ flexShrink: 0, marginLeft: 10 }}>
+    {/* Mobile Branch */}
+    <View style={styles.avatar}>
+      <Text style={styles.avatarText}>U</Text>
+    </View>
+  </Pressable>
+</View>
+<Text style={[styles.headerSub, { flexShrink: 1, minWidth: 0, width: "100%" }]}>Real-time monitoring, insights and actionable recommendations for your farm.</Text>
+      <View style={[styles.rowWrap, { gap: 8, marginTop: 12 }]}>
+        <View style={styles.pillCard}>
+          <CloudSun size={16} color={C.amber} />
+          <View>
+            <Text style={styles.pillMain}>28°C</Text>
+            <Text style={styles.pillSub}>Partly Cloudy</Text>
+          </View>
+        </View>
+
+        <Pressable style={styles.pillCard} onPress={() => setOffline((o) => !o)}>
+          {offline ? <WifiOff size={16} color={C.green} /> : <Wifi size={16} color={C.green} />}
+          <View>
+            <Text style={styles.pillMain}>{offline ? "Offline Mode" : "Online"}</Text>
+            <Text style={styles.pillSub}>{offline ? "Data will sync when online" : "Synced just now"}</Text>
+          </View>
+        </Pressable>
+
+        <View style={{ position: "relative" }}>
+          <Pressable style={styles.iconBtn} onPress={() => setNotifOpen((o) => !o)}>
+            <Bell size={17} color={C.textPrimary} />
+            <View style={styles.notifDot}>
+              <Text style={styles.notifDotText}>3</Text>
+            </View>
+          </Pressable>
+        </View>
+      </View>
+    </>
+  ) : (
+    <>
+      <View style={{ flexShrink: 1 }}>
+        <Text style={styles.h1}>Dashboard &amp; Insights</Text>
+        <Text style={styles.headerSub}>Real-time monitoring, insights and actionable recommendations for your farm.</Text>
+      </View>
+
+      <View style={[styles.rowWrap, { gap: 8 }]}>
+        <View style={styles.pillCard}>
+          <CloudSun size={16} color={C.amber} />
+          <View>
+            <Text style={styles.pillMain}>28°C</Text>
+            <Text style={styles.pillSub}>Partly Cloudy</Text>
+          </View>
+        </View>
+
+        <Pressable style={styles.pillCard} onPress={() => setOffline((o) => !o)}>
+          {offline ? <WifiOff size={16} color={C.green} /> : <Wifi size={16} color={C.green} />}
+          <View>
+            <Text style={styles.pillMain}>{offline ? "Offline Mode" : "Online"}</Text>
+            <Text style={styles.pillSub}>{offline ? "Data will sync when online" : "Synced just now"}</Text>
+          </View>
+        </Pressable>
+
+        <View style={{ position: "relative" }}>
+          <Pressable style={styles.iconBtn} onPress={() => setNotifOpen((o) => !o)}>
+            <Bell size={17} color={C.textPrimary} />
+            <View style={styles.notifDot}>
+              <Text style={styles.notifDotText}>3</Text>
+            </View>
+          </Pressable>
+        </View>
+
+        <Pressable style={styles.profileBtn} onPress={() => showToast("Profile menu coming soon")}>
+          {/* Desktop Branch */}
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>U</Text>
+          </View>
+          <View>
+            <Text style={styles.profileName}>UserName</Text>
+            <Text style={styles.profileRole}>Farmer</Text>
+          </View>
+          <ChevronDown size={14} color={C.textFaint} />
+        </Pressable>
+      </View>
+    </>
+  )}
+</View>
           {/* Stat cards */}
           <View style={styles.statsGrid}>
             {stats.map((s) => (
@@ -582,31 +675,46 @@ export default function Dashboard() {
           {/* Trends + Risk history */}
           <View style={[styles.twoColRow, isNarrow && { flexDirection: "column" }]}>
             <Card style={styles.flexCol}>
-              <SectionTitle
+              {/* <SectionTitle
                 n="1"
                 title="Trends"
                 action={
-                  <View style={[styles.rowWrap, { gap: 8 }]}>
-                    <Dropdown value={metric} options={Object.keys(metricColor)} onChange={(v) => setMetric(v as Metric)} width={130} />
-                    <View style={styles.segmentGroup}>
-                      {(["7D", "30D", "3M"] as RangeKey[]).map((r) => (
-                        <Pressable key={r} onPress={() => setRange(r)} style={[styles.segmentBtn, { backgroundColor: range === r ? C.green : "transparent" }]}>
-                          <Text style={[styles.segmentText, { color: range === r ? "#022c22" : C.textDim, fontWeight: range === r ? "600" : "400" }]}>
-                            {r === "7D" ? "7 Days" : r === "30D" ? "30 Days" : "3 Months"}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                }
-              />
-              <Text style={styles.cardHint}>Track key patterns over time</Text>
+  <View style={[styles.rowWrap, { gap: 8 }, isNarrow && { width: "100%", marginTop: 8 }]}>
+    <Dropdown value={metric} options={Object.keys(metricColor)} onChange={(v) => setMetric(v as Metric)} width={130} />
+    <View style={[styles.segmentGroup, isNarrow && { flex: 1 }]}>
+      {(["7D", "30D", "3M"] as RangeKey[]).map((r) => (
+        <Pressable key={r} onPress={() => setRange(r)} style={[styles.segmentBtn, isNarrow && { flex: 1, alignItems: "center" }, { backgroundColor: range === r ? C.green : "transparent" }]}>
+          <Text style={[styles.segmentText, { color: range === r ? "#022c22" : C.textDim, fontWeight: range === r ? "600" : "400" }]}>
+            {r === "7D" ? "7 Days" : r === "30D" ? "30Days" : "3Months"}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  </View>
+}
+              /> */}
+              {/* <Text style={styles.cardHint}>Track key patterns over time</Text> */}
+            <SectionTitle n="1" title="Trends" />
 
+<Text style={styles.cardHint}>Track key patterns over time</Text>
+
+<View style={[styles.rowWrap, { gap: 8 }, isNarrow && { width: "100%" }]}>
+  <Dropdown value={metric} options={Object.keys(metricColor)} onChange={(v) => setMetric(v as Metric)} width={130} />
+  <View style={[styles.segmentGroup, isNarrow && { flex: 1 }]}>
+    {(["7D", "30D", "3M"] as RangeKey[]).map((r) => (
+      <Pressable key={r} onPress={() => setRange(r)} style={[styles.segmentBtn, isNarrow && { flex: 1, alignItems: "center" }, { backgroundColor: range === r ? C.green : "transparent" }]}>
+        <Text style={[styles.segmentText, { color: range === r ? "#022c22" : C.textDim, fontWeight: range === r ? "600" : "400" }]}>
+          {r === "7D" ? "7 Days" : r === "30D" ? "30 Days" : "3 Months"}
+        </Text>
+      </Pressable>
+    ))}
+  </View>
+</View>
               <View style={[styles.trendRow, isNarrow && { flexDirection: "column" }]}>
                 <View style={{ flex: 1, minWidth: 220 }}>
-                  <LineChart data={data} dataKey={metric} color={metricColor[metric]} />
+                  <LineChart data={data} dataKey={metric} color={metricColor[metric]} height={200} />
                 </View>
-                <View style={{ flex: 1, minWidth: 180, gap: 8 }}>
+                <View style={{ flex: 1, minWidth: 180, gap: 8, marginTop: isNarrow ? 0 : 12 }}>
                   {(Object.keys(metricColor) as Metric[]).map((m) => (
                     <View key={m} style={styles.legendRow}>
                       <View style={styles.rowCenter}>
@@ -952,8 +1060,9 @@ const styles = StyleSheet.create({
   main: { flex: 1, minHeight: 0 },
   mainContent: { padding: 20, gap: 20,paddingBottom: 40 },
 
-  headerRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
-  h1: { fontSize: 22, fontWeight: "700", color: C.textPrimary },
+ headerRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
+topBarRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+h1: { fontSize: 22, fontWeight: "700", color: C.textPrimary },
   headerSub: { fontSize: 13, color: C.textDim, marginTop: 4 },
 
   pillCard: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.border },
@@ -992,7 +1101,7 @@ notifPanel: { position: "absolute", right: 20, width: 280, zIndex: 9999, borderR
   card: { borderRadius: 16, borderWidth: 1, borderColor: C.border, backgroundColor: C.card, padding: 20 },
   flexCol: { flex: 1, minWidth: 300 },
 
-  sectionTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  sectionTitleRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", marginBottom: 4, gap: 8 },
   sectionTitleText: { fontSize: 15, fontWeight: "600", color: C.textPrimary },
   cardHint: { fontSize: 12, color: C.textFaint, marginBottom: 16 },
 
@@ -1009,7 +1118,7 @@ notifPanel: { position: "absolute", right: 20, width: 280, zIndex: 9999, borderR
   dropdownItem: { paddingHorizontal: 10, paddingVertical: 8 },
   dropdownItemText: { fontSize: 12, color: C.textDim },
 
-  chartLabelsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 4, paddingHorizontal: 4 },
+  chartLabelsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: -40, paddingHorizontal: 4 },
   chartLabelText: { fontSize: 10, color: C.textFaint },
 
   progressTrack: { height: 6, width: "100%", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.08)", overflow: "hidden" },

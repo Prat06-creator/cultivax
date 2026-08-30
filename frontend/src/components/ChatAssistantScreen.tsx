@@ -330,6 +330,12 @@ const [activeChatId, setActiveChatId] = useState('1');
     //   keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     // >
        <Wrapper style={styles.flex} {...wrapperProps}>
+         <View style={styles.root}>
+              {toast && (
+                <View style={styles.toast}>
+                  <Text style={styles.toastText}>{toast}</Text>
+                </View>
+              )}
       <View style={styles.container}>
         <View style={[styles.body ]}>
                 <Sidebar
@@ -477,6 +483,7 @@ const [activeChatId, setActiveChatId] = useState('1');
         </View>
       </View>
       </View>
+      </View>
       </Wrapper>
    
   );
@@ -588,7 +595,7 @@ function AssistantBubble({
 
 const styles = StyleSheet.create({
    body: { flex: 1, minHeight: 0, flexDirection: "row", overflow: "hidden", position: "relative" },
-
+  root: { flex: 1, minHeight: 0, backgroundColor: C.page },
   toast: {
     position: "absolute",
     top: 20,

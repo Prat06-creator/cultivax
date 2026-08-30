@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {useRouter} from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -95,6 +96,7 @@ export default function Sidebar({
   showToast,
 }: SidebarProps) {
      const router = useRouter()
+const insets = useSafeAreaInsets();
     //   const { width: screenWidth } = useWindowDimensions();
     //   const isNarrow = screenWidth < 900;
     // const [sidebarOpen, setSidebarOpen] = useState(!isNarrow);
@@ -112,7 +114,7 @@ export default function Sidebar({
       <Pressable style={styles.backdrop} onPress={() => setSidebarOpen(false)} />
     )}
             {(!isNarrow || sidebarOpen) && (
-              <View style={[styles.sidebar, isNarrow && styles.sidebarNarrow]}>
+              <View style={[styles.sidebar, isNarrow && styles.sidebarNarrow, { paddingTop: insets.top }]}>
               <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
                 <View style={styles.brandRow}>
                   <View style={styles.brandIcon}>
@@ -151,6 +153,7 @@ export default function Sidebar({
                           { backgroundColor: active ? C.green : pressed ? C.hover : "transparent" },
                         ]}
                       >
+                         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, width: "100%" }}>
                         <Icon size={17} color={active ? "#022c22" : "rgba(209,250,229,0.7)"} />
                         <Text style={[styles.navLabel, { color: active ? "#022c22" : "rgba(209,250,229,0.7)", fontWeight: active ? "600" : "400" }]}>
                           {item.label}
@@ -160,6 +163,7 @@ export default function Sidebar({
                             <Text style={styles.navBadgeText}>{item.badge}</Text>
                           </View>
                         ) : null}
+                        </View> 
                       </Pressable>
                     );
                   })}
