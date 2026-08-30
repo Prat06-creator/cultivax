@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import {useRouter} from 'expo-router'
 import Sidebar from "@/components/sidebar";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -256,6 +256,52 @@ function SectionTitle({ n, title, action }: { n?: string; title: string; action?
 }
 
 // simple tap-to-open dropdown, replaces <select>
+// function Dropdown({
+//   value,
+//   options,
+//   onChange,
+//   width,
+// }: {
+//   value: string;
+//   options: string[];
+//   onChange: (v: string) => void;
+//   width?: number;
+// }) {
+//   const [open, setOpen] = useState(false);
+//   return (
+//     <View style={{  width }}>
+//       <Pressable style={styles.selectBox} onPress={() => setOpen((true) )}>
+//         <Text style={styles.selectText} numberOfLines={1}>
+//           {value}
+//         </Text>
+//         <ChevronDown size={13} color={C.textFaint} />
+//       </Pressable>
+//        <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+//         <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
+//           <View style={styles.modalDropdown}>
+//       {/* {open && (
+//         <View style={styles.dropdownList}> */}
+//           {options.map((opt) => (
+//             <Pressable
+//               key={opt}
+//               style={({ pressed }) => [styles.dropdownItem, pressed && { backgroundColor: C.hover }]}
+//               onPress={() => {
+//                 onChange(opt);
+//                 setOpen(false);
+//               }}
+//             >
+//               <Text style={[styles.dropdownItemText, opt === value && { color: C.green }]}>{opt}</Text>
+//             </Pressable>
+//           ))}
+//         </View>
+//         </Pressable>
+//         </Modal>
+//          </View>
+//       // )
+//       // }
+    
+//   );
+// }
 function Dropdown({
   value,
   options,
@@ -268,37 +314,53 @@ function Dropdown({
   width?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const triggerRef = useRef<View>(null);
+
+  const openDropdown = () => {
+    triggerRef.current?.measureInWindow((x, y, w, h) => {
+      setAnchor({ x, y, width: w, height: h });
+      setOpen(true);
+    });
+  };
+
   return (
-    <View style={{  width }}>
-      <Pressable style={styles.selectBox} onPress={() => setOpen((true) )}>
+    <View style={{ width }}>
+      <Pressable ref={triggerRef} style={styles.selectBox} onPress={openDropdown}>
         <Text style={styles.selectText} numberOfLines={1}>
           {value}
         </Text>
         <ChevronDown size={13} color={C.textFaint} />
       </Pressable>
-       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setOpen(false)}>
-          <View style={styles.modalDropdown}>
-      {/* {open && (
-        <View style={styles.dropdownList}> */}
-          {options.map((opt) => (
-            <Pressable
-              key={opt}
-              style={({ pressed }) => [styles.dropdownItem, pressed && { backgroundColor: C.hover }]}
-              onPress={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-            >
-              <Text style={[styles.dropdownItemText, opt === value && { color: C.green }]}>{opt}</Text>
-            </Pressable>
-          ))}
-        </View>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.modalBackdropTop} onPress={() => setOpen(false)}>
+          <View
+            style={[
+              styles.modalDropdown,
+              {
+                position: "absolute",
+                top: anchor.y + anchor.height + 6,
+                left: anchor.x,
+                width: Math.max(anchor.width, width ?? 0) || undefined,
+              },
+            ]}
+          >
+            {options.map((opt) => (
+              <Pressable
+                key={opt}
+                style={({ pressed }) => [styles.dropdownItem, pressed && { backgroundColor: C.hover }]}
+                onPress={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+              >
+                <Text style={[styles.dropdownItemText, opt === value && { color: C.green }]}>{opt}</Text>
+              </Pressable>
+            ))}
+          </View>
         </Pressable>
-        </Modal> </View>
-      // )
-      // }
-    
+      </Modal>
+    </View>
   );
 }
 
@@ -348,7 +410,9 @@ export default function Dashboard() {
     setToast(msg);
     setTimeout(() => setToast(null), 2200);
   }
-
+  function closeNotif() {
+  setNotifOpen(false);
+}
   function toggleReportType(key: string) {
     setReportType(key);
     setCheckedSections(Object.fromEntries((REPORT_SECTIONS[key] || []).map((s) => [s, true])));
@@ -366,7 +430,7 @@ export default function Dashboard() {
         </View>
       )}
 
-      <View style={[styles.body]}>
+      <View style={[styles.body,  ]}>
         <Sidebar
         activeNav={activeNav}
   setActiveNav={setActiveNav}
@@ -442,7 +506,10 @@ export default function Dashboard() {
         )} */}
 
         {/* Main */}
-        <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}>
+        <ScrollView style={styles.main} contentContainerStyle={styles.mainContent}
+        onScrollBeginDrag={closeNotif}
+  onScroll={closeNotif}
+  scrollEventThrottle={16}>
           {/* Header */}
           <View style={[styles.headerRow, isNarrow && { flexDirection: "column", alignItems: "flex-start" }, { paddingTop: insets.top + 8 }]}>
             <View style={{ flexShrink: 1 }}>
@@ -794,6 +861,11 @@ export default function Dashboard() {
         </ScrollView>
       </View>
       {notifOpen && (
+        <>
+             <Pressable
+      style={styles.notifBackdrop}
+      onPress={closeNotif}
+    />
                    <View style={[styles.notifPanel, { top: insets.top + 56 }]}>
                     {ALERTS.map((a) => {
                       const Icon = a.icon;
@@ -807,7 +879,8 @@ export default function Dashboard() {
                         </View>
                       );
                     })}
-                  </View>
+                  </View> 
+                  </>
                 )}
     </View>
   );
@@ -817,7 +890,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, minHeight: 0, backgroundColor: C.page },
   body: { flex: 1, minHeight: 0, flexDirection: "row", overflow: "hidden", position: "relative" },
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-modalDropdown: { width: 220, borderRadius: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.cardAlt, padding: 8, gap: 4 },
+  modalBackdropTop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
+  modalDropdown: { width: 220, borderRadius: 12, borderWidth: 1, borderColor: C.border, backgroundColor: C.cardAlt, padding: 8, gap: 4 },
   toast: {
     position: "absolute",
     top: 20,
