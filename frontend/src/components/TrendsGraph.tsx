@@ -19,10 +19,10 @@ import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import ViewShot from 'react-native-view-shot';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { FileText,History, Gauge, Home, MessageCircle, Sprout, TrendingUp } from 'lucide-react-native';
+import { FileText,History, Gauge, Home, MessageCircle, Sprout, TrendingUp, Camera } from 'lucide-react-native';
 const NAV_ITEMS = [
   { key: "overview", label: "Overview", icon: Home },
-  { key: "chats", label: "Chats", icon: MessageCircle },
+  { key: "image", label: "Image Diagnosis", icon: Camera },
   { key: "trends", label: "Trends", icon: TrendingUp },
   { key: "risk-history", label: "Risk History", icon: History },
   { key: "yield", label: "Yield Prediction", icon: Gauge },
