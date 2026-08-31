@@ -49,7 +49,7 @@ const C = {
   hover: "rgba(255,255,255,0.06)",
   textPrimary: "#ffffff",
   textDim: "rgba(209,250,229,0.6)",
-  textFaint: "rgba(209,250,229,0.4)",
+  textFaint: "rgba(209,250,229,0.4)", 
   green: "#34d399",
   greenDeep: "#10b981",
   amber: "#fbbf24",
@@ -59,7 +59,7 @@ const C = {
 };
 
 type RangeKey = "7D" | "30D" | "3M";
-type Metric = "Crop Health" | "Soil Moisture" | "Temperature" | "Humidity";
+type Metric = "Crop Health" | "Soil Moisture" | "Temperature" | "Humidity"|"Altitude";
 type IconType = React.ComponentType<{ size?: number; color?: string }>;
 
 interface Alert {
@@ -84,16 +84,16 @@ const NAV_ITEMS = [
 
 const CHART_DATA: Record<
   RangeKey,
-  { label: string; "Crop Health": number; "Soil Moisture": number; Temperature: number; Humidity: number }[]
+  { label: string; "Crop Health": number; "Soil Moisture": number; Temperature: number; Humidity: number; Altitude: number }[]
 > = {
   "7D": [
-    { label: "19 May", "Crop Health": 46, "Soil Moisture": 60, Temperature: 26, Humidity: 55 },
-    { label: "20 May", "Crop Health": 63, "Soil Moisture": 58, Temperature: 27, Humidity: 57 },
-    { label: "21 May", "Crop Health": 58, "Soil Moisture": 63, Temperature: 27, Humidity: 58 },
-    { label: "22 May", "Crop Health": 70, "Soil Moisture": 65, Temperature: 28, Humidity: 56 },
-    { label: "23 May", "Crop Health": 68, "Soil Moisture": 64, Temperature: 28, Humidity: 59 },
-    { label: "24 May", "Crop Health": 78, "Soil Moisture": 66, Temperature: 28, Humidity: 60 },
-    { label: "25 May", "Crop Health": 84, "Soil Moisture": 68, Temperature: 28.4, Humidity: 60 },
+    { label: "19 May", "Crop Health": 46, "Soil Moisture": 60, Temperature: 26, Humidity: 55, Altitude: 100 },
+    { label: "20 May", "Crop Health": 63, "Soil Moisture": 58, Temperature: 27, Humidity: 57, Altitude: 102 },
+    { label: "21 May", "Crop Health": 58, "Soil Moisture": 63, Temperature: 27, Humidity: 58, Altitude: 101 },
+    { label: "22 May", "Crop Health": 70, "Soil Moisture": 65, Temperature: 28, Humidity: 56, Altitude: 103 },
+    { label: "23 May", "Crop Health": 68, "Soil Moisture": 64, Temperature: 28, Humidity: 59, Altitude: 104 },
+    { label: "24 May", "Crop Health": 78, "Soil Moisture": 66, Temperature: 28, Humidity: 60, Altitude: 105 },
+    { label: "25 May", "Crop Health": 84, "Soil Moisture": 68, Temperature: 28.4, Humidity: 60, Altitude: 106 },
   ],
   "30D": Array.from({ length: 10 }, (_, i) => ({
     label: `Day ${i * 3 + 1}`,
@@ -101,6 +101,7 @@ const CHART_DATA: Record<
     "Soil Moisture": Math.round(50 + Math.cos(i / 3) * 8 + i * 1.6),
     Temperature: Math.round((24 + Math.sin(i / 2) * 3) * 10) / 10,
     Humidity: Math.round(50 + Math.cos(i / 2) * 6),
+    Altitude: Math.round(100 + Math.sin(i / 3) * 5),
   })),
   "3M": Array.from({ length: 12 }, (_, i) => ({
     label: `Wk ${i + 1}`,
@@ -108,6 +109,7 @@ const CHART_DATA: Record<
     "Soil Moisture": Math.round(52 + Math.cos(i / 4) * 10 + i * 1.1),
     Temperature: Math.round((23 + Math.sin(i / 4) * 4) * 10) / 10,
     Humidity: Math.round(48 + Math.sin(i / 3) * 8),
+    Altitude: Math.round(100 + Math.sin(i / 3) * 5),
   })),
 };
 
@@ -390,6 +392,7 @@ export default function Dashboard() {
     "Soil Moisture": C.blue,
     Temperature: C.red,
     Humidity: C.purple,
+    Altitude: C.amber,
   };
 
   const latest = data[data.length - 1];
@@ -723,7 +726,11 @@ export default function Dashboard() {
                       </View>
                       <Text style={styles.legendValue}>
                         {(latest as any)[m]}
-                        {m === "Temperature" ? "°C" : "%"}
+                        {m === "Temperature"
+                          ? "°C"
+                          : m === "Altitude"
+                          ? " m"
+                          : "%"}
                       </Text>
                     </View>
                   ))}
