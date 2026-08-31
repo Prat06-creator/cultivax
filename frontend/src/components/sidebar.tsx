@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {useRouter} from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import {
   View,
   Text,
@@ -135,6 +136,11 @@ const insets = useSafeAreaInsets();
                         key={item.key}
                         onPress={() => {
                            if (isNarrow) setSidebarOpen(false);
+                            showToast(`Navigating to ${item.label}...`);
+                          if (item.key === "trends") {
+                            setTimeout(() => router.push("/trends"), 100);
+                            return;
+                          }
                            showToast(`Navigating to ${item.label}...`);
                           if (item.key === "chats") {
                             setTimeout(() => router.push("/chat"), 100);
