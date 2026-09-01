@@ -741,7 +741,10 @@ export default function Dashboard() {
                       </Text>
                     </View>
                   ))}
-                  <Pressable onPress={() => setActiveNav("trends")} style={styles.linkBtn}>
+                  <Pressable onPress={() => {
+                    setActiveNav("trends");
+                    router.push("/trends");
+                  }} style={styles.linkBtn}>
                     <Text style={styles.linkText}>View All Trends</Text>
                     <ArrowRight size={12} color={C.green} />
                   </Pressable>
