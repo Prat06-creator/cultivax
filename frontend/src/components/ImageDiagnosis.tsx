@@ -65,7 +65,7 @@ const NAV_ITEMS = [
  
 ] as const;
 // ---------- Types ----------
-type RiskLevel = 'High' | 'Medium' | 'Low';
+type RiskLevel = 'Extremely High' | 'High' | 'Medium' | 'Low';
 
 interface OtherCondition {
   name: string;
@@ -95,19 +95,19 @@ interface UploadedImageEntry {
 }
 
 // ---------- Mock data ----------
-const MOCK_RESULT: AnalysisResult = {
-  condition: 'Tomato – Early Blight',
-  confidence: 78,
-  riskLevel: 'High',
-  riskMessage:
-    'This condition has a high risk of spreading and may cause significant yield loss.',
-  otherConditions: [
-    { name: 'Septoria Leaf Spot', confidence: 42 },
-    { name: 'Bacterial Leaf Spot', confidence: 28 },
-    { name: 'Leaf Mold', confidence: 15 },
-    { name: 'Target Spot', confidence: 10 },
-  ],
-};
+// const MOCK_RESULT: AnalysisResult = {
+//   condition: 'Tomato – Early Blight',
+//   confidence: 78,
+//   riskLevel: 'High',
+//   riskMessage:
+//     'This condition has a high risk of spreading and may cause significant yield loss.',
+//   otherConditions: [
+//     { name: 'Septoria Leaf Spot', confidence: 42 },
+//     { name: 'Bacterial Leaf Spot', confidence: 28 },
+//     { name: 'Leaf Mold', confidence: 15 },
+//     { name: 'Target Spot', confidence: 10 },
+//   ],
+// };
 
 const RECOMMENDED_ACTIONS: RecommendedAction[] = [
   {
@@ -213,19 +213,158 @@ export default function ImageDiagnosis() {
     setResult(null);
   };
 
-  const analyseImage = () => {
+  const analyseImage = async () => {
     if (!imageUri) {
-      Alert.alert('No image selected', 'Please upload a plant image first.');
+      Alert.alert(
+        'No image selected',
+        'Please upload a plant image first.'
+      );
       return;
     }
+  
     setIsAnalysing(true);
     setResult(null);
-    // TODO: replace with real API call to your Django backend
-    setTimeout(() => {
-      setIsAnalysing(false);
-      setResult(MOCK_RESULT);
+  
+    try {
+      const formData = new FormData();
+  
+      if (Platform.OS === 'web') {
+        // On web, imageUri is a blob URL
+        const imageResponse = await fetch(imageUri);
+        const blob = await imageResponse.blob();
+  
+        formData.append(
+          'image',
+          blob,
+          'plant-image.jpg'
+        );
+      } else {
+        // Android / iOS
+        formData.append(
+          'image',
+          {
+            uri: imageUri,
+            name: 'plant-image.jpg',
+            type: 'image/jpeg',
+          } as any
+        );
+      }
+  
+      const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+  
+      const response = await fetch(
+        `${API_BASE_URL}/disease/predict`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+  
+      const data = await response.json();
+  
+      console.log('Disease API response:', data);
+  
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.detail || 'Disease detection failed'
+        );
+      }
+  
+      const prediction = data.prediction;
+  
+      // -----------------------------------------
+      // Convert backend class name for UI
+      // -----------------------------------------
+  
+      const formatDiseaseName = (className: string) => {
+        return className
+          .replace('Tomato___', '')
+          .replaceAll('_', ' ')
+          .trim();
+      };
+  
+      const condition = formatDiseaseName(
+        prediction.predicted_class
+      );
+  
+      // Backend confidence is 0-1
+      // UI expects percentage 0-100
+      const confidence =
+        prediction.confidence * 100;
+  
+      // -----------------------------------------
+      // Other predictions
+      // -----------------------------------------
+  
+      const otherConditions =
+        prediction.top_predictions
+          .slice(1)
+          .map((item: any) => ({
+            name: formatDiseaseName(item.class_name),
+            confidence: item.confidence * 100,
+          }));
+  
+      // -----------------------------------------
+      // Temporary risk interpretation
+      // -----------------------------------------
+  
+      let riskLevel: RiskLevel;
+  
+      if (confidence >= 90) {
+        riskLevel = 'Extremely High';
+      } else if (confidence >= 70) {
+        riskLevel = 'High';
+      } else if (confidence >= 50) {
+        riskLevel = 'Medium';
+      } else {
+        riskLevel = 'Low';
+      }
+  
+      let riskMessage = '';
+  
+      if (riskLevel === 'High') {
+        riskMessage =
+          'The model detected this condition with high confidence.';
+      } else if (riskLevel === 'Medium') {
+        riskMessage =
+          'The model detected this condition with moderate confidence.';
+      } else {
+        riskMessage =
+          'The model detected this condition with lower confidence.';
+      }
+  
+      // -----------------------------------------
+      // Set result for existing UI
+      // -----------------------------------------
+  
+      setResult({
+        condition,
+        confidence: Number(confidence.toFixed(1)),
+        riskLevel,
+        riskMessage,
+        otherConditions,
+      });
+  
       setActiveTab('analysis');
-    }, 1500);
+  
+    } catch (error: any) {
+  
+      console.error(
+        'Disease detection error:',
+        error
+      );
+  
+      Alert.alert(
+        'Analysis failed',
+        error?.message ||
+          'Could not connect to the disease detection server.'
+      );
+  
+    } finally {
+  
+      setIsAnalysing(false);
+  
+    }
   };
 
   const selectHistoryImage = (item: UploadedImageEntry) => {
@@ -415,7 +554,8 @@ export default function ImageDiagnosis() {
                 <View style={[styles.card, styles.riskCard]}>
                   <View style={styles.cardHeaderRow}>
                     <Ionicons name="shield-outline" size={16} color={COLORS.accent} />
-                    <Text style={styles.cardHeaderText}>Risk Level</Text>
+                    <Text style={styles.cardHeaderText}>Detection Confidence</Text> 
+                    {/* renamed from risk level to detection confidence */}
                   </View>
 
                   {!result ? (

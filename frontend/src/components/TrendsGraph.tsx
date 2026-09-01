@@ -1,4 +1,12 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+
+import { getSensorHistory, type SensorHistoryResponse } from "../services/api";
 import {useRouter} from 'expo-router'
 import Sidebar from "@/components/sidebar";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -77,14 +85,14 @@ type ParameterKey =
   | 'altitude'
   | 'lightIntensity';
 
-type DurationKey =
-  | 'hourly'
-  | '3days'
-  | '7days'
-  | '1month'
-  | '3months'
-  | '6months'
-  | '1year';
+  type DurationKey =
+  | "1d"
+  | "3d"
+  | "7d"
+  | "1m"
+  | "3m"
+  | "6m"
+  | "1y";
 
 interface ParameterConfig {
   key: ParameterKey;
@@ -163,157 +171,75 @@ const PARAMETERS: ParameterConfig[] = [
 interface DurationConfig {
   key: DurationKey;
   label: string;
-  points: number;
 }
 
 const DURATIONS: DurationConfig[] = [
-  { key: 'hourly', label: 'Hourly', points: 12 },
-  { key: '3days', label: '3 Days', points: 9 },
-  { key: '7days', label: '7 Days', points: 7 },
-  { key: '1month', label: '1 Month', points: 10 },
-  { key: '3months', label: '3 Months', points: 3 },
-  { key: '6months', label: '6 Months', points: 6 },
-  { key: '1year', label: '1 Year', points: 12 },
+  { key: "1d", label: "1 Day" },
+  { key: "3d", label: "3 Days" },
+  { key: "7d", label: "7 Days" },
+  { key: "1m", label: "1 Month" },
+  { key: "3m", label: "3 Months" },
+  { key: "6m", label: "6 Months" },
+  { key: "1y", label: "1 Year" },
 ];
 
-// Static "Average Values" panel data (mirrors the design)
-const AVERAGE_VALUES: { key: ParameterKey; value: string }[] = [
-  { key: 'cropHealth', value: '76%' },
-  { key: 'soilMoisture', value: '68%' },
-  { key: 'temperature', value: '28.4°C' },
-  { key: 'humidity', value: '60%' },
-  { key: 'altitude', value: '152 m' },
-  { key: 'lightIntensity', value: '580 lux' },
-];
-// Helpers — mock data generation & labels
-function seededRandom(seed: number) {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
 
-function buildLabels(duration: DurationConfig): string[] {
-  const now = new Date();
-  const labels: string[] = [];
 
-  switch (duration.key) {
-    case 'hourly': {
-      for (let i = duration.points - 1; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 60 * 60 * 1000);
-        labels.push(`${d.getHours()}:00`);
-      }
-      break;
-    }
-    case '3days': {
-      for (let i = duration.points - 1; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 8 * 60 * 60 * 1000);
-        labels.push(
-          `${d.toLocaleDateString('en-US', { day: '2-digit' })} ${d.toLocaleDateString('en-US', {
-            month: 'short',
-          })} ${d.getHours()}h`
-        );
-      }
-      break;
-    }
-    case '7days': {
-      for (let i = duration.points - 1; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        labels.push(
-          `${d.toLocaleDateString('en-US', { day: '2-digit' })} ${d.toLocaleDateString('en-US', {
-            month: 'short',
-          })}`
-        );
-      }
-      break;
-    }
-    case '1month': {
-      for (let i = duration.points - 1; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 3 * 24 * 60 * 60 * 1000);
-        labels.push(d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }));
-      }
-      break;
-    }
-    case '3months':
-    case '6months': {
-      for (let i = duration.points - 1; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
-      }
-      break;
-    }
-    case '1year': {
-      for (let i = duration.points - 1; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        labels.push(d.toLocaleDateString('en-US', { month: 'short' }));
-      }
-      break;
-    }
-  }
-  return labels;
-}
 
-// function buildSeries(param: ParameterConfig, duration: DurationConfig): number[] {
-//   const values: number[] = [];
-//   const range = param.max - param.min;
-//   const mid = param.min + range * 0.55;
-//   // seed varies by parameter + duration so switching feels distinct but stable per selection
-//   const seedBase = param.key.length * 13 + duration.points * 7;
 
-//   let prev = mid;
-//   for (let i = 0; i < duration.points; i++) {
-//     const noise = (seededRandom(seedBase + i * 3.1) - 0.5) * range * 0.35;
-//     const drift = Math.sin((i / duration.points) * Math.PI * 1.4 + seedBase) * range * 0.22;
-//     let v = mid + drift + noise;
-//     // smooth toward previous point a bit so the line isn't too jagged
-//     v = prev * 0.35 + v * 0.65;
-//     v = Math.min(param.max, Math.max(param.min, v));
-//     values.push(param.decimals === 0 ? Math.round(v) : Math.round(v * 10) / 10);
-//     prev = v;
-//   }
-//   return values;
-// }
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) % 100000;
-  }
-  return hash;
-}
-
-function buildSeries(param: ParameterConfig, duration: DurationConfig): number[] {
-  const values: number[] = [];
-  const range = param.max - param.min;
-  const mid = param.min + range * 0.55;
-  // seed varies by parameter AND duration identity, so two durations
-  // with the same point count never produce identical series
-  const seedBase = param.key.length * 13 + duration.points * 7 + hashString(duration.key) * 3;
-
-  let prev = mid;
-  for (let i = 0; i < duration.points; i++) {
-    const noise = (seededRandom(seedBase + i * 3.1) - 0.5) * range * 0.35;
-    const drift = Math.sin((i / duration.points) * Math.PI * 1.4 + seedBase) * range * 0.22;
-    let v = mid + drift + noise;
-    v = prev * 0.35 + v * 0.65;
-    v = Math.min(param.max, Math.max(param.min, v));
-    values.push(param.decimals === 0 ? Math.round(v) : Math.round(v * 10) / 10);
-    prev = v;
-  }
-  return values;
-}
 // ----------------------------------------------------------------------
 // Component
 // ----------------------------------------------------------------------
 const screenWidth = Dimensions.get('window').width;
 
 export default function TrendsScreen() {
+
+  const [historyData, setHistoryData] =
+  useState<SensorHistoryResponse | null>(null);
+
+const [loading, setLoading] = useState(false);
+
+const [error, setError] = useState<string | null>(null);
+// const [selectedDuration, setSelectedDuration] =
+  // useState<DurationConfig>(DURATIONS[0]);
+  const [selectedDuration, setSelectedDuration] = useState<DurationConfig>(DURATIONS[2]); // 7 Days default
+
+useEffect(() => {
+  fetchHistory();
+}, [selectedDuration]);
+const fetchHistory = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    const data = await getSensorHistory(
+      selectedDuration.key
+    );
+
+    setHistoryData(data);
+  } catch (error) {
+    console.error("History API error:", error);
+
+    setError("Unable to load sensor data");
+    setHistoryData(null);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
     const { width: screenWidth } = useWindowDimensions();
     const isNarrow = screenWidth < 900;
    const [toast, setToast] = useState<string | null>(null);
-   const [activeNav, setActiveNav] = useState<(typeof NAV_ITEMS)[number]["key"]>("trends");
+   const [activeNav, setActiveNav] = useState<string>("trends");
    const [sidebarOpen, setSidebarOpen] = useState(!isNarrow);
   const [selectedParam, setSelectedParam] = useState<ParameterConfig>(PARAMETERS[0]);
-  const [selectedDuration, setSelectedDuration] = useState<DurationConfig>(DURATIONS[2]); // 7 Days default
+  
   const [pickerVisible, setPickerVisible] = useState(false);
   const [chartWidth, setChartWidth] = useState<number>(0);
   const [tooltip, setTooltip] = useState<{
@@ -327,11 +253,70 @@ export default function TrendsScreen() {
 
   const chartShotRef = useRef<ViewShot>(null);
   const tooltipHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const labels = useMemo(() => buildLabels(selectedDuration), [selectedDuration]);
-  const values = useMemo(() => buildSeries(selectedParam, selectedDuration), [
-    selectedParam,
-    selectedDuration,
-  ]);
+  const labels = useMemo(() => {
+    if (!historyData) return [];
+  
+    return historyData.points.map((point) => {
+      const date = new Date(point.period);
+  
+      if (selectedDuration.key === "1d") {
+        return date.toLocaleTimeString("en-IN", {
+          hour: "numeric",
+          hour12: true,
+        });
+      }
+  
+      if (
+        selectedDuration.key === "3d" ||
+        selectedDuration.key === "7d" ||
+        selectedDuration.key === "1m"
+      ) {
+        return date.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+        });
+      }
+  
+      return date.toLocaleDateString("en-IN", {
+        month: "short",
+        year: "numeric",
+      });
+    });
+  }, [historyData, selectedDuration]);
+  
+  const values = useMemo<number[]>(() => {
+    if (!historyData) return [];
+
+    return historyData.points.map((point) => {
+      switch (selectedParam.key) {
+        case "soilMoisture":
+          return typeof point.soil_moisture === "number" ? point.soil_moisture : Number.NaN;
+
+        case "temperature":
+          return typeof point.temperature === "number" ? point.temperature : Number.NaN;
+
+        case "humidity":
+          return typeof point.humidity === "number" ? point.humidity : Number.NaN;
+
+        case "altitude":
+          return typeof point.altitude === "number" ? point.altitude : Number.NaN;
+
+        case "lightIntensity":
+          return typeof point.light_intensity === "number" ? point.light_intensity : Number.NaN;
+
+        case "cropHealth":
+          return Number.NaN;
+
+        default:
+          return Number.NaN;
+      }
+    });
+  }, [historyData, selectedParam]);
+
+  const getValueAtIndex = (index: number): number => {
+    const value = values[index];
+    return typeof value === "number" && !Number.isNaN(value) ? value : 0;
+  };
 
   // Thin out x-axis labels so long ranges (1 Month / 1 Year) stay readable
   const displayLabels = useMemo(() => {
@@ -341,26 +326,69 @@ export default function TrendsScreen() {
     return labels.map((l, i) => (i % step === 0 ? l : ''));
   }, [labels]);
 
+  const validValues = useMemo(() => {
+    return values.filter(
+      (value): value is number =>
+        value !== null && !Number.isNaN(value)
+    );
+  }, [values]);
+  
   const stats = useMemo(() => {
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
-    const first = values[0];
-    const last = values[values.length - 1];
-    const trend = first === 0 ? 0 : ((last - first) / Math.abs(first)) * 100;
-    const maxIdx = values.indexOf(max);
-    const minIdx = values.indexOf(min);
+    // No valid sensor data
+    if (validValues.length === 0) {
+      return {
+        max: 0,
+        min: 0,
+        avg: 0,
+        trend: 0,
+        dataPoints: 0,
+        maxLabel: "",
+        minLabel: "",
+      };
+    }
+  
+    const max = Math.max(...validValues);
+    const min = Math.min(...validValues);
+  
+    const avg =
+      validValues.reduce(
+        (sum, value) => sum + value,
+        0
+      ) / validValues.length;
+  
+    // First and last ACTUAL values,
+    // ignoring null/missing hours.
+    const first = validValues[0];
+    const last = validValues[validValues.length - 1];
+  
+    const trend =
+      first === 0
+        ? 0
+        : ((last - first) / Math.abs(first)) * 100;
+  
+    // Find labels corresponding to max/min
+    const maxIdx = values.findIndex(
+      (value) => value === max
+    );
+  
+    const minIdx = values.findIndex(
+      (value) => value === min
+    );
+  
     return {
       max,
       min,
       avg,
       trend,
-      dataPoints: values.length,
-      maxLabel: labels[maxIdx],
-      minLabel: labels[minIdx],
+      dataPoints: validValues.length,
+  
+      maxLabel:
+        maxIdx >= 0 ? labels[maxIdx] : "",
+  
+      minLabel:
+        minIdx >= 0 ? labels[minIdx] : "",
     };
-  }, [values, labels]);
-
+  }, [values, validValues, labels]);
   const fmt = (v: number) =>
     `${selectedParam.decimals === 0 ? Math.round(v) : v.toFixed(1)}${selectedParam.unit}`;
 
@@ -499,7 +527,8 @@ const handleDataPointLeave = () => {
     datasets: [
       {
         data: values,
-        color: (opacity = 1) => hexToRgba(selectedParam.color, opacity),
+        color: (opacity = 1) =>
+          hexToRgba(selectedParam.color, opacity),
         strokeWidth: 3,
       },
     ],
@@ -572,38 +601,69 @@ const handleDataPointLeave = () => {
 
   {pickerVisible && (
     <View style={styles.inlineDropdown}>
-      {PARAMETERS.map((item) => {
-        const active = item.key === selectedParam.key;
-        return (
-          <TouchableOpacity
-            key={item.key}
-            style={[styles.modalOption, active && styles.modalOptionActive]}
-            onPress={() => {
-              setSelectedParam(item);
-              setPickerVisible(false);
-              setTooltip(null);
-            }}
-          >
-            {item.icon}
-            <Text
-              style={[
-                styles.modalOptionText,
-                active && { color: COLORS.accent, fontWeight: '700' },
-              ]}
-            >
-              {item.label}
-            </Text>
-            {active && (
-              <Ionicons
-                name="checkmark"
-                size={18}
-                color={COLORS.accent}
-                style={{ marginLeft: 'auto' }}
-              />
-            )}
-          </TouchableOpacity>
-        );
-      })}
+      {PARAMETERS.map((p) => {
+  let value: number | null = null;
+
+  if (historyData?.points?.length) {
+    const validValues = historyData.points
+      .map((point) => {
+        switch (p.key) {
+          case "soilMoisture":
+            return point.soil_moisture;
+
+          case "temperature":
+            return point.temperature;
+
+          case "humidity":
+            return point.humidity;
+
+          case "altitude":
+            return point.altitude;
+
+          case "lightIntensity":
+            return point.light_intensity;
+
+          default:
+            return null;
+        }
+      })
+      .filter(
+        (v): v is number =>
+          v !== null && !Number.isNaN(v)
+      );
+
+    if (validValues.length > 0) {
+      value =
+        validValues.reduce((a, b) => a + b, 0) /
+        validValues.length;
+    }
+  }
+
+  return (
+    <TouchableOpacity
+      key={p.key}
+      style={styles.averageRow}
+      activeOpacity={0.7}
+      onPress={() => setSelectedParam(p)}
+    >
+      <View style={styles.averageRowLeft}>
+        {p.icon}
+
+        <Text style={styles.averageRowLabel}>
+          {p.label}
+        </Text>
+      </View>
+
+      <Text style={styles.averageRowValue}>
+        {value !== null
+          ? `${p.decimals === 0
+              ? Math.round(value)
+              : value.toFixed(p.decimals)}${p.unit}`
+          : "No data"}
+      </Text>
+    </TouchableOpacity>
+  );
+})}
     </View>
   )}
 </View>
@@ -820,22 +880,73 @@ const handleDataPointLeave = () => {
           <View style={[styles.card, styles.averagesCard]}>
             <Text style={styles.averagesTitle}>Average Values</Text>
             {PARAMETERS.map((p) => {
-              const avg = AVERAGE_VALUES.find((a) => a.key === p.key);
-              return (
-                <TouchableOpacity
-                  key={p.key}
-                  style={styles.averageRow}
-                  activeOpacity={0.7}
-                  onPress={() => setSelectedParam(p)}
-                >
-                  <View style={styles.averageRowLeft}>
-                    {p.icon}
-                    <Text style={styles.averageRowLabel}>{p.label}</Text>
-                  </View>
-                  <Text style={styles.averageRowValue}>{avg?.value}</Text>
-                </TouchableOpacity>
-              );
-            })}
+  let value: number | null = null;
+
+  if (historyData?.points?.length) {
+    const sensorValues = historyData.points
+      .map((point) => {
+        switch (p.key) {
+          case "soilMoisture":
+            return point.soil_moisture;
+
+          case "temperature":
+            return point.temperature;
+
+          case "humidity":
+            return point.humidity;
+
+          case "altitude":
+            return point.altitude;
+
+          case "lightIntensity":
+            return point.light_intensity;
+
+          case "cropHealth":
+            return null;
+
+          default:
+            return null;
+        }
+      })
+      .filter(
+        (v): v is number =>
+          v !== null && !Number.isNaN(v)
+      );
+
+    if (sensorValues.length > 0) {
+      value =
+        sensorValues.reduce(
+          (sum, current) => sum + current,
+          0
+        ) / sensorValues.length;
+    }
+  }
+
+  return (
+    <TouchableOpacity
+      key={p.key}
+      style={styles.averageRow}
+      activeOpacity={0.7}
+      onPress={() => setSelectedParam(p)}
+    >
+      <View style={styles.averageRowLeft}>
+        {p.icon}
+
+        <Text style={styles.averageRowLabel}>
+          {p.label}
+        </Text>
+      </View>
+
+      <Text style={styles.averageRowValue}>
+        {value === null
+          ? "No data"
+          : `${p.decimals === 0
+              ? Math.round(value)
+              : value.toFixed(p.decimals)}${p.unit}`}
+      </Text>
+    </TouchableOpacity>
+  );
+})}
           </View>
         </View>
 
