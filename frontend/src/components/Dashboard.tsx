@@ -35,7 +35,8 @@ import {
   FileSpreadsheet,
   FileType2,
   Sun,
-  Check, MessageCircle
+  Check, MessageCircle,
+  Camera
 } from "lucide-react-native";
 
 // ---------- Palette ----------
@@ -74,7 +75,7 @@ interface Alert {
 
 const NAV_ITEMS = [
   { key: "overview", label: "Overview", icon: Home },
-  { key: "chats", label: "Chats", icon: MessageCircle },
+  { key: "image", label: "Image Diagnosis", icon: Camera },
   { key: "trends", label: "Trends", icon: TrendingUp },
   { key: "risk-history", label: "Risk History", icon: History },
   { key: "yield", label: "Yield Prediction", icon: Gauge },
