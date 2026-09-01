@@ -55,7 +55,7 @@ The model is trained on a combination of lab-condition and real-world field imag
 
 Field images were split 60% into training, 15% into validation, and 25% held back completely untouched for final evaluation — this untouched split is what the reported field accuracy below is measured on.
 
-Raw datasets are **not** included in this repo (too large for git) — see `prepare_tomato_dataset.py`, `prepare_field_test.py`, `pool_field_sources.py`, and `integrate_field_data.py` for how to rebuild the full dataset from the original public sources.
+Raw datasets are **not** included in this repo — see `prepare_tomato_dataset.py`, `prepare_field_test.py`, `pool_field_sources.py`, and `integrate_field_data.py` for how to rebuild the full dataset from the original public sources.
 
 ## Results
 
