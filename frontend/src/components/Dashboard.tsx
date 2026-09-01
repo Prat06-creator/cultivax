@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {useRouter} from 'expo-router'
 import Sidebar from "@/components/sidebar";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import {
   StyleSheet, Modal,
   useWindowDimensions,
 } from "react-native";
+import { getSensorHistory, type SensorHistoryResponse } from "../services/api";
 import Svg, { Polyline, Path, Circle, Line } from "react-native-svg";
 import {
   Leaf,
@@ -218,6 +219,7 @@ function LineChart({
   }));
   const path = points.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(" ");
   const areaPath = `${path} L${points[points.length - 1].x},${height} L0,${height} Z`;
+  
 
   return (
     <View>
@@ -382,6 +384,19 @@ export default function Dashboard() {
   const [activeNav, setActiveNav] = useState<(typeof NAV_ITEMS)[number]["key"]>("overview");
   const [range, setRange] = useState<RangeKey>("7D");
   const [metric, setMetric] = useState<Metric>("Crop Health");
+  const apiRange = {
+    "7D": "7d",
+    "30D": "1m",
+    "3M": "3m",
+  }[range] as "7d" | "1m" | "3m";
+  const [historyData, setHistoryData] =
+  useState<SensorHistoryResponse | null>(null);
+
+  const [historyLoading, setHistoryLoading] =
+  useState(false);    
+  const latestSensor = historyData?.points?.length
+  ? historyData.points[historyData.points.length - 1]
+  : null;
   const [crop, setCrop] = useState("Rice (Paddy)");
   const [reportType, setReportType] = useState<string>("farm");
   const [checkedSections, setCheckedSections] = useState<Record<string, boolean>>(
@@ -392,7 +407,36 @@ export default function Dashboard() {
   const [offline, setOffline] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(!isNarrow);
 
-  const data = CHART_DATA[range];
+  // const data = CHART_DATA[range];
+  const data = useMemo(() => {
+    if (!historyData?.points?.length) {
+      return [];
+    }
+  
+    return historyData.points.map((point) => ({
+      label: new Date(point.period).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+  
+      "Crop Health": 0,
+  
+      "Soil Moisture":
+        point.soil_moisture ?? 0,
+  
+      Temperature:
+        point.temperature ?? 0,
+  
+      Humidity:
+        point.humidity ?? 0,
+  
+      Altitude:
+        point.altitude ?? 0,
+  
+      "Light Intensity":
+        point.light_intensity ?? 0,
+    }));
+  }, [historyData]);
   const metricColor: Record<Metric, string> = {
     "Crop Health": C.green,
     "Soil Moisture": C.blue,
@@ -402,18 +446,99 @@ export default function Dashboard() {
     "Light Intensity": C.yellow,
   };
 
-  const latest = data[data.length - 1];
+  const latest = data[data.length - 1] ?? {
+    label: "",
+    "Crop Health": 0,
+    "Soil Moisture": 0,
+    Temperature: 0,
+    Humidity: 0,
+    Altitude: 0,
+    "Light Intensity": 0,
+  };
 
   const stats = useMemo(
     () => [
-      { icon: Leaf, label: "Crop Health Score", value: `${latest["Crop Health"]}%`, sub: "↑ 8% vs last 7 days", color: C.green, spark: data.map((d) => Number(d["Crop Health"])) },
-      { icon: Gauge, label: "Overall Risk Score", value: "32/100", sub: "Medium Risk", color: C.amber, spark: [20, 25, 22, 30, 28, 34, 32] },
-      { icon: Droplet, label: "Soil Moisture", value: `${latest["Soil Moisture"]}%`, sub: "Optimal", color: C.blue, spark: data.map((d) => Number(d["Soil Moisture"])) },
-      { icon: Thermometer, label: "Temperature", value: `${latest["Temperature"]}°C`, sub: "↑ 1.2°C vs yesterday", color: C.red, spark: data.map((d) => Number(d["Temperature"])) },
-      { icon: CloudRain, label: "Upcoming Rainfall", value: "12 mm", sub: "In next 3 days", color: C.purple, spark: [4, 8, 6, 10, 12, 9, 12] },
-      { icon: Sprout, label: "Field Status", value: "3/4", sub: "Fields Healthy", color: C.green, spark: [2, 2, 3, 3, 2, 3, 3] },
+      {
+        icon: Leaf,
+        label: "Crop Health Score",
+        value: `${latest?.["Crop Health"] ?? 0}%`,
+        sub: "AI-based crop health",
+        color: C.green,
+        spark: data.map((d) => Number(d["Crop Health"])),
+      },
+  
+      {
+        icon: Gauge,
+        label: "Overall Risk Score",
+        value: "32/100",
+        sub: "Medium Risk",
+        color: C.amber,
+        spark: [20, 25, 22, 30, 28, 34, 32],
+      },
+  
+      {
+        icon: Droplet,
+        label: "Soil Moisture",
+        value:
+          latestSensor?.soil_moisture != null
+            ? `${latestSensor.soil_moisture}%`
+            : "--",
+        sub: "Live sensor reading",
+        color: C.blue,
+        spark:
+          historyData?.points?.map(
+            (p) => Number(p.soil_moisture)
+          ) ?? [],
+      },
+      {
+        icon: CloudRain,
+        label: "Humidity",
+        value:
+          latestSensor?.humidity != null
+            ? `${latestSensor.humidity.toFixed(1)}%`
+            : "--",
+        sub: "Live sensor reading",
+        color: C.purple,
+        spark:
+          historyData?.points?.map(
+            (p) => Number(p.humidity)
+          ) ?? [],
+      },
+  
+      {
+        icon: Thermometer,
+        label: "Temperature",
+        value:
+          latestSensor?.temperature != null
+            ? `${latestSensor.temperature.toFixed(1)}°C`
+            : "--",
+        sub: "Live sensor reading",
+        color: C.red,
+        spark:
+          historyData?.points?.map(
+            (p) => Number(p.temperature)
+          ) ?? [],
+      },
+  
+      {
+        icon: CloudRain,
+        label: "Upcoming Rainfall",
+        value: "12 mm",
+        sub: "In next 3 days",
+        color: C.purple,
+        spark: [4, 8, 6, 10, 12, 9, 12],
+      },
+  
+      {
+        icon: Sprout,
+        label: "Field Status",
+        value: "3/4",
+        sub: "Fields Healthy",
+        color: C.green,
+        spark: [2, 2, 3, 3, 2, 3, 3],
+      },
     ],
-    [data, latest]
+    [data, latest, latestSensor, historyData]
   );
 
   function showToast(msg: string) {
@@ -431,6 +556,24 @@ export default function Dashboard() {
   function toggleSection(s: string) {
     setCheckedSections((prev) => ({ ...prev, [s]: !prev[s] }));
   }
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        setHistoryLoading(true);
+  
+        const data = await getSensorHistory(apiRange);
+  
+        setHistoryData(data);
+      } catch (error) {
+        console.error("Dashboard history error:", error);
+        setHistoryData(null);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+  
+    fetchHistory();
+  }, [apiRange]);
 
   return (
     <View style={styles.root}>
@@ -722,7 +865,26 @@ export default function Dashboard() {
 </View>
               <View style={[styles.trendRow, isNarrow && { flexDirection: "column" }]}>
                 <View style={{ flex: 1, minWidth: 220 }}>
-                  <LineChart data={data} dataKey={metric} color={metricColor[metric]} height={200} />
+                {historyLoading ? (
+  <View style={{ height: 200, justifyContent: "center", alignItems: "center" }}>
+    <Text style={{ color: C.textDim }}>
+      Loading sensor data...
+    </Text>
+  </View>
+) : data.length === 0 ? (
+  <View style={{ height: 200, justifyContent: "center", alignItems: "center" }}>
+    <Text style={{ color: C.textDim }}>
+      No sensor data available
+    </Text>
+  </View>
+) : (
+  <LineChart
+    data={data}
+    dataKey={metric}
+    color={metricColor[metric]}
+    height={200}
+  />
+)}
                 </View>
                 <View style={{ flex: 1, minWidth: 180, gap: 8, marginTop: isNarrow ? 0 : 12 }}>
                   {(Object.keys(metricColor) as Metric[]).map((m) => (
