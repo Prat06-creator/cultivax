@@ -847,7 +847,7 @@ export default function Dashboard() {
 }
               /> */}
               {/* <Text style={styles.cardHint}>Track key patterns over time</Text> */}
-            <SectionTitle n="1" title="Trends" />
+            <SectionTitle  title="Trends" />
 
 <Text style={styles.cardHint}>Track key patterns over time</Text>
 
@@ -916,7 +916,7 @@ export default function Dashboard() {
 
             <Card style={styles.flexCol}>
               <SectionTitle
-                n="2"
+               
                 title="Risk History"
                 action={
                   <Pressable onPress={() => setActiveNav("risk-history")}>
@@ -957,7 +957,7 @@ export default function Dashboard() {
           {/* Yield + Risk forecast */}
           <View style={[styles.twoColRow, isNarrow && { flexDirection: "column" }]}>
             <Card style={styles.flexCol}>
-              <SectionTitle n="3" title="Yield Prediction" />
+              <SectionTitle title="Yield Prediction" />
               <Text style={styles.cardHint}>Predict crop yield using AI insights</Text>
 
               <View style={[styles.rowWrap, { gap: 8, marginBottom: 16 }]}>
@@ -1001,7 +1001,7 @@ export default function Dashboard() {
             </Card>
 
             <Card style={styles.flexCol}>
-              <SectionTitle n="4" title="Risk Forecast" />
+              <SectionTitle title="Risk Forecast" />
               <Text style={styles.cardHint}>Forecast potential risks and prepare ahead</Text>
 
               <View style={{ gap: 12 }}>
@@ -1043,7 +1043,7 @@ export default function Dashboard() {
           {/* Reports + alerts */}
           <View style={[styles.twoColRow, isNarrow && { flexDirection: "column" }]}>
             <Card style={styles.flexCol}>
-              <SectionTitle n="5" title="Reports" />
+              <SectionTitle title="Reports" />
               <Text style={styles.cardHint}>Generate and download detailed reports</Text>
 
               <Text style={styles.smallLabel}>Select Report Type</Text>
