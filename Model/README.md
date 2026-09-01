@@ -67,7 +67,6 @@ Raw datasets are **not** included in this repo — see `prepare_tomato_dataset.p
 The field holdout number is the one that matters for real deployment — it reflects performance on the kind of photos an actual user would take, not clean lab photos.
 
 **Known weak points (see `field_evaluation.json` for full per-class breakdown):**
-- `Healthy` leaves are sometimes misclassified as `Early_blight` — the costlier direction of error in practice, since it would falsely alarm a farmer with a healthy plant.
 - `Early_blight` draws in a disproportionate share of misclassifications from several other classes, likely due to visual similarity in early-stage lesions across diseases.
 - Classes with the smallest amount of field data (`Target_Spot`, `Tomato_mosaic_virus`) have wider uncertainty in their reported numbers due to smaller sample sizes.
 
