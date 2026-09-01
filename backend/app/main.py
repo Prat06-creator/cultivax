@@ -5,6 +5,7 @@ from app.database import models
 from app.api.routes.sensor import router as sensor_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.routes.disease import router as disease_router
 
 app = FastAPI(title="CultivaX API")
 app.add_middleware(
@@ -22,6 +23,7 @@ Base.metadata.create_all(bind=engine)
 
 
 app.include_router(sensor_router)
+app.include_router(disease_router)
 
 
 @app.get("/")
